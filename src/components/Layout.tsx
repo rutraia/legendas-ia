@@ -51,7 +51,6 @@ export const Layout = ({ children }: LayoutProps) => {
     { name: 'Gerar Legendas', href: '/caption-generator', icon: MessageSquarePlus },
     { name: 'Biblioteca', href: '/caption-library', icon: BookMarked },
     { name: 'Calendário', href: '/calendar', icon: Calendar },
-    { name: 'Configurações', href: '/settings', icon: Settings },
   ];
 
   return (

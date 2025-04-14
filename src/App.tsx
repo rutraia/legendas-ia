@@ -13,7 +13,6 @@ import ClientProfile from "./pages/ClientProfile";
 import CaptionGenerator from "./pages/CaptionGenerator";
 import CaptionLibrary from "./pages/CaptionLibrary";
 import ContentCalendar from "./pages/ContentCalendar";
-import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -66,7 +65,6 @@ const App = () => {
                 <Route path="/caption-generator" element={<CaptionGenerator />} />
                 <Route path="/caption-library" element={<CaptionLibrary />} />
                 <Route path="/calendar" element={<ContentCalendar />} />
-                <Route path="/settings" element={<Settings />} />
                 <Route path="/users" element={<Users />} />
               </Route>
               
