@@ -1,4 +1,61 @@
-# Welcome to your Lovable project
+# Legendas IA - Aplicativo de Marketing para Geração de Legendas
+
+Este é um aplicativo de marketing especializado na geração de legendas para redes sociais utilizando inteligência artificial.
+
+## Funcionalidades Principais
+
+- Geração de legendas personalizadas para posts de redes sociais
+- Gerenciamento de perfis de clientes
+- Biblioteca de legendas geradas
+- Personalização por persona e rede social
+- Calendário de conteúdo
+
+## Tecnologias Utilizadas
+
+Este projeto é construído com:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+- Supabase (backend e autenticação)
+
+## Como executar o projeto localmente
+
+O único requisito é ter Node.js & npm instalados - [instale com nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Siga estes passos:
+
+```sh
+# Passo 1: Clone o repositório
+git clone <URL_DO_GIT>
+
+# Passo 2: Navegue até o diretório do projeto
+cd Marketing
+
+# Passo 3: Instale as dependências necessárias
+npm i
+
+# Passo 4: Inicie o servidor de desenvolvimento
+npm run dev
+```
+
+## Estrutura do Projeto
+
+- `src/components`: Componentes reutilizáveis 
+- `src/pages`: Páginas da aplicação
+- `src/lib`: Utilitários e serviços, incluindo integração com Supabase
+- `src/hooks`: Custom hooks
+- `public`: Arquivos estáticos
+
+## Contribuindo com o Projeto
+
+1. Crie um fork do repositório
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Abra um Pull Request
 
 ## Project info
 
@@ -49,16 +106,6 @@ npm run dev
 - Select the "Codespaces" tab.
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
 ## How can I deploy this project?
 
