@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCalendarEvents, clients, captions } from '@/lib/data';
 import { Instagram, Facebook, Linkedin, ExternalLink, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +29,7 @@ import { ptBR } from 'date-fns/locale';
 import { generateId } from '@/lib/utils';
 import { Caption } from '@/components/CaptionCard';
 import { toast } from 'sonner';
+import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar';
 
 interface CalendarEvent {
   id: string;
@@ -40,6 +39,17 @@ interface CalendarEvent {
   client: string;
 }
 
+// Interface para o formato esperado pelo FullScreenCalendar
+interface CalendarData {
+  day: Date;
+  events: {
+    id: number;
+    name: string;
+    time: string;
+    datetime: string;
+  }[];
+}
+
 const ContentCalendar = () => {
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -47,6 +57,7 @@ const ContentCalendar = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [calendarData, setCalendarData] = useState<CalendarData[]>([]);
   
   // Estados para o formulário de agendamento
   const [scheduleForm, setScheduleForm] = useState({
@@ -55,6 +66,37 @@ const ContentCalendar = () => {
     title: "",
     scheduledDate: new Date(),
   });
+  
+  // Converter os eventos existentes para o formato esperado pelo FullScreenCalendar
+  useEffect(() => {
+    const formattedData: CalendarData[] = [];
+    const eventsByDate: { [key: string]: CalendarEvent[] } = {};
+    
+    // Agrupar eventos por data
+    events.forEach(event => {
+      const dateKey = new Date(event.date).toISOString().split('T')[0];
+      if (!eventsByDate[dateKey]) {
+        eventsByDate[dateKey] = [];
+      }
+      eventsByDate[dateKey].push(event);
+    });
+    
+    // Converter para o formato esperado
+    Object.keys(eventsByDate).forEach(dateKey => {
+      const calendarDay: CalendarData = {
+        day: new Date(dateKey),
+        events: eventsByDate[dateKey].map((event, index) => ({
+          id: index + 1,
+          name: event.title,
+          time: format(new Date(event.date), 'HH:mm'),
+          datetime: event.date
+        }))
+      };
+      formattedData.push(calendarDay);
+    });
+    
+    setCalendarData(formattedData);
+  }, [events]);
   
   const getEventsForDate = (date: Date | undefined) => {
     if (!date) return [];
@@ -82,21 +124,6 @@ const ContentCalendar = () => {
       default:
         return null;
     }
-  };
-  
-  // Custom day renderer to highlight days with events
-  const renderDay = (date: Date) => {
-    // Safeguard against undefined date prop
-    if (!date) return null;
-    
-    const dayEvents = getEventsForDate(date);
-    const hasEvents = dayEvents.length > 0;
-    
-    return (
-      <div className={`relative w-full h-full flex items-center justify-center ${hasEvents ? 'calendar-day-has-content' : ''}`}>
-        {date.getDate()}
-      </div>
-    );
   };
   
   const handleEventClick = (event: CalendarEvent) => {
@@ -189,158 +216,70 @@ const ContentCalendar = () => {
         </Button>
       </PageHeader>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Calendário</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-md border"
-                components={{
-                  Day: ({ date: dayDate }) => (
-                    <div className="calendar-day">
-                      {dayDate ? renderDay(dayDate) : null}
-                    </div>
-                  ),
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Events */}
-        <div>
-          <Card className="h-full flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-lg">
-                {date && format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <Tabs defaultValue="events" className="h-full flex flex-col">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="events">Eventos</TabsTrigger>
-                  <TabsTrigger value="notes">Notas</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="events" className="flex-1">
-                  {selectedDateEvents.length > 0 ? (
-                    <div className="space-y-3">
-                      {selectedDateEvents.map((event) => (
-                        <div 
-                          key={event.id} 
-                          className="flex items-center justify-between bg-card p-3 rounded-lg border cursor-pointer hover:border-primary/50 transition-colors"
-                          onClick={() => handleEventClick(event)}
-                        >
-                          <div className="flex items-center">
-                            {getPlatformIcon(event.platform)}
-                            <span className="ml-2 font-medium">{event.title}</span>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                      <CalendarIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                      <h3 className="font-medium mb-1">Nenhum evento para este dia</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Selecione um dia diferente ou agende uma nova postagem
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="notes" className="flex-1">
-                  <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                    <p className="text-sm text-muted-foreground">
-                      Você ainda não adicionou nenhuma nota para este dia.
-                    </p>
-                    <Button variant="outline" className="mt-2">
-                      Adicionar Nota
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="h-full mb-6">
+        <FullScreenCalendar data={calendarData} />
       </div>
       
-      {/* Event Dialog */}
-      {selectedEvent && (
-        <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{selectedEvent.title}</DialogTitle>
-              <DialogDescription>
-                Detalhes do evento programado
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="flex items-center">
-                <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>{formatEventDate(selectedEvent.date)}</span>
+      {/* Dialogs */}
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Evento</DialogTitle>
+            <DialogDescription>
+              {selectedEvent && formatEventDate(selectedEvent.date)}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-4">
+              <div>
+                <Label>Título</Label>
+                <div className="text-lg font-medium">{selectedEvent.title}</div>
               </div>
-              
-              <div className="flex items-center">
-                <Badge className="flex items-center">
+              <div>
+                <Label>Cliente</Label>
+                <div>{clients.find(c => c.id === selectedEvent.client)?.name || selectedEvent.client}</div>
+              </div>
+              <div>
+                <Label>Plataforma</Label>
+                <div className="flex items-center">
                   {getPlatformIcon(selectedEvent.platform)}
-                  <span className="ml-1">
+                  <span className="ml-2">
                     {selectedEvent.platform === 'instagram' ? 'Instagram' : 
                      selectedEvent.platform === 'facebook' ? 'Facebook' : 
                      selectedEvent.platform === 'linkedin' ? 'LinkedIn' : 'Todas Plataformas'}
                   </span>
-                </Badge>
+                </div>
               </div>
-              
-              <p className="text-sm">
-                Cliente: <span className="font-medium">{selectedEvent.client}</span>
-              </p>
             </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCloseEventDialog}>
-                Fechar
-              </Button>
-              <Button>
-                Ver Conteúdo
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+          <DialogFooter>
+            <Button onClick={handleCloseEventDialog}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
-      {/* Schedule Dialog */}
       <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Agendar Nova Postagem</DialogTitle>
             <DialogDescription>
-              Preencha as informações para agendar uma nova postagem
+              Preencha os detalhes para agendar uma nova postagem nas redes sociais.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="schedule-client">Cliente</Label>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="client">Cliente</Label>
               <Select 
-                value={scheduleForm.client}
+                value={scheduleForm.client} 
                 onValueChange={(value) => setScheduleForm({...scheduleForm, client: value})}
               >
-                <SelectTrigger id="schedule-client">
+                <SelectTrigger>
                   <SelectValue placeholder="Selecione um cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.name}>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>
                       {client.name}
                     </SelectItem>
                   ))}
@@ -348,54 +287,36 @@ const ContentCalendar = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="schedule-platform">Plataforma</Label>
+            <div>
+              <Label htmlFor="platform">Plataforma</Label>
               <Select 
-                value={scheduleForm.platform}
+                value={scheduleForm.platform} 
                 onValueChange={(value) => setScheduleForm({...scheduleForm, platform: value})}
               >
-                <SelectTrigger id="schedule-platform">
-                  <SelectValue placeholder="Selecione uma plataforma" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a plataforma" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="instagram">Instagram</SelectItem>
                   <SelectItem value="facebook">Facebook</SelectItem>
                   <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="all">Todas as plataformas</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="schedule-title">Título da postagem</Label>
-              <Input
-                id="schedule-title"
-                placeholder="Ex: Lançamento de produto, Promoção de verão..."
+            <div>
+              <Label htmlFor="title">Título do Conteúdo</Label>
+              <Input 
+                id="title" 
+                placeholder="Título ou descrição curta" 
                 value={scheduleForm.title}
                 onChange={(e) => setScheduleForm({...scheduleForm, title: e.target.value})}
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label>Data de publicação</Label>
-              <div className="border rounded-md p-2">
-                <Calendar
-                  mode="single"
-                  selected={scheduleForm.scheduledDate}
-                  onSelect={(date) => date && setScheduleForm({...scheduleForm, scheduledDate: date})}
-                  className="mx-auto"
-                />
-              </div>
-            </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleScheduleSubmit}>
-              Agendar Postagem
-            </Button>
+            <Button onClick={handleScheduleSubmit}>Agendar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
