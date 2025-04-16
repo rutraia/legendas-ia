@@ -1,5 +1,7 @@
 import { supabase } from './client';
+import { ensureAuthenticated } from './client';
 import { Client, Caption, Persona, SocialMedia } from '@/types';
+import { CalendarEvent, ContentStatus } from '../../types';
 
 // Funções para Clientes
 export async function getClients() {
@@ -388,18 +390,19 @@ export async function createCaption(caption: Omit<Caption, 'id'>) {
       throw new Error('Plataforma é obrigatória para criar uma legenda');
     }
     
-    // Verificar sessão
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      console.error('Erro: usuário não está autenticado para criar uma legenda.');
+    // Garantir que o usuário esteja autenticado usando a função auxiliar
+    try {
+      await ensureAuthenticated();
+    } catch (authError) {
+      console.error('Erro ao autenticar usuário:', authError);
       throw new Error('Você precisa estar logado para criar uma legenda');
     }
     
-    // Verificar se o cliente existe
+    // Verificar se o cliente existe e se o usuário tem permissão para acessá-lo
     try {
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
-        .select('id')
+        .select('id, user_id')
         .eq('id', caption.client_id)
         .single();
         
@@ -409,10 +412,27 @@ export async function createCaption(caption: Omit<Caption, 'id'>) {
         throw new Error(`Cliente com ID ${caption.client_id} não encontrado`);
       }
       
+      // Verificar se o usuário atual é o dono do cliente
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData.session?.user.id;
+      
+      if (clientData.user_id !== currentUserId) {
+        console.error('Erro: usuário não tem permissão para este cliente');
+        throw new Error('Você não tem permissão para criar legendas para este cliente');
+      }
+      
       console.log('Cliente verificado com sucesso:', clientData);
     } catch (clientCheckError) {
       console.error('Erro ao verificar cliente:', clientCheckError);
       throw new Error('Falha ao verificar o cliente associado à legenda');
+    }
+    
+    // Obter o ID do usuário atual
+    const { data: sessionData } = await supabase.auth.getSession();
+    const currentUserId = sessionData.session?.user.id;
+    
+    if (!currentUserId) {
+      throw new Error('Não foi possível identificar o usuário atual');
     }
     
     // Normalizar o objeto da legenda
@@ -421,42 +441,54 @@ export async function createCaption(caption: Omit<Caption, 'id'>) {
       content: caption.content.trim(),
       platform: caption.platform,
       status: caption.status || 'draft',
-      image_url: caption.image_url || null
+      image_url: caption.image_url || null,
+      scheduled_for: caption.scheduled_for || null,
+      created_at: new Date().toISOString(),
+      user_id: currentUserId  // Adicionar o ID do usuário - fundamental para RLS
     };
     
     console.log('Dados normalizados da legenda:', normalizedCaption);
     
     // Inserir a legenda no banco de dados
-    const { data, error } = await supabase
-      .from('captions')
-      .insert([normalizedCaption])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('=== Erro ao criar legenda ===');
-      console.error('Detalhes do erro:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      
-      // Verificar tipos específicos de erro
-      if (error.code === '23503') {
-        throw new Error('Referência inválida: o cliente pode não existir ou estar inacessível');
-      } else if (error.code === '23505') {
-        throw new Error('Uma legenda idêntica já existe');
-      } else if (error.code === '42P01') {
-        throw new Error('Erro na estrutura do banco de dados: a tabela de legendas pode não existir');
+    try {
+      const { data, error } = await supabase
+        .from('captions')
+        .insert([normalizedCaption])
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('=== Erro ao criar legenda ===');
+        console.error('Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        if (error.message && error.message.includes('row-level security')) {
+          throw new Error('Erro de permissão: você não tem autorização para criar legendas para este cliente');
+        }
+        
+        // Verificar tipos específicos de erro
+        if (error.code === '23503') {
+          throw new Error('Referência inválida: o cliente pode não existir ou estar inacessível');
+        } else if (error.code === '23505') {
+          throw new Error('Uma legenda idêntica já existe');
+        } else if (error.code === '42P01') {
+          throw new Error('Erro na estrutura do banco de dados: a tabela de legendas pode não existir');
+        }
+        
+        throw error;
       }
-      
-      throw error;
-    }
 
-    console.log('=== Legenda criada com sucesso ===');
-    console.log('Dados da legenda criada:', data);
-    return data;
+      console.log('=== Legenda criada com sucesso ===');
+      console.log('Dados da legenda criada:', data);
+      return data;
+    } catch (insertError: any) {
+      console.error('Erro ao inserir legenda:', insertError);
+      throw insertError;
+    }
   } catch (error: any) {
     console.error('=== Erro na chamada do Supabase ao criar legenda ===');
     console.error('Tipo do erro:', error.constructor.name);
@@ -476,20 +508,44 @@ export async function createCaption(caption: Omit<Caption, 'id'>) {
   }
 }
 
-export async function updateCaption(id: string, caption: Partial<Caption>) {
-  const { data, error } = await supabase
-    .from('captions')
-    .update(caption)
-    .eq('id', id)
-    .select()
-    .single();
+export async function updateCaption(caption: Partial<Caption> & { id: string }) {
+  console.log('=== Iniciando atualização de legenda ===');
+  console.log('ID da legenda:', caption.id);
+  console.log('Dados da legenda:', caption);
 
-  if (error) {
-    console.error('Erro ao atualizar legenda:', error);
-    return null;
+  try {
+    const { data, error } = await supabase
+      .from('captions')
+      .update(caption)
+      .eq('id', caption.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('=== Erro ao atualizar legenda ===');
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
+
+    console.log('=== Legenda atualizada com sucesso ===');
+    console.log('Dados atualizados:', data);
+    return data;
+  } catch (error: any) {
+    console.error('=== Erro na chamada do Supabase para atualizar legenda ===');
+    console.error('Tipo do erro:', error.constructor.name);
+    console.error('Mensagem:', error.message);
+    
+    if (error.stack) {
+      console.error('Stack:', error.stack);
+    }
+    
+    throw error;
   }
-
-  return data;
 }
 
 // Funções para Redes Sociais
@@ -568,5 +624,68 @@ export async function updateSocialMedia(clientId: string, socialMedia: SocialMed
     console.error('Mensagem:', error.message);
     console.error('Stack:', error.stack);
     throw error;
+  }
+}
+
+/**
+ * Obtém todas as legendas agendadas (onde scheduled_for não é nulo)
+ * Retorna array de objetos CalendarEvent para uso no calendário e biblioteca de legendas
+ */
+export async function getScheduledCaptions(): Promise<CalendarEvent[]> {
+  console.log('🔍 Iniciando busca de legendas agendadas');
+  try {
+    console.log('🚀 Preparando consulta ao Supabase');
+    const { data, error } = await supabase
+      .from('captions')
+      .select(`
+        id, 
+        content, 
+        platform, 
+        scheduled_for, 
+        status,
+        title,
+        client_id,
+        clients (id, name)
+      `)
+      .not('scheduled_for', 'is', null)
+      .order('scheduled_for', { ascending: true });
+
+    console.log('📊 Resultado da consulta:', { data, error });
+
+    if (error) {
+      console.error('❌ Erro ao buscar legendas agendadas:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn('⚠️ Nenhuma legenda agendada encontrada');
+      return [];
+    }
+
+    const scheduledEvents: CalendarEvent[] = data.map((caption: any) => {
+      console.log('🔄 Processando legenda:', caption);
+      
+      const clientData = caption.clients as unknown as { id: string; name: string } | null;
+      const clientName = clientData?.name || 'Cliente';
+      const scheduledDate = caption.scheduled_for ? new Date(caption.scheduled_for) : new Date();
+
+      return {
+        id: caption.id,
+        title: caption.title || `${clientName} - ${caption.platform}`,
+        date: scheduledDate.toISOString(),
+        platform: caption.platform,
+        client: clientName,
+        client_id: caption.client_id,
+        content: caption.content,
+        scheduled_for: caption.scheduled_for,
+        status: caption.status
+      };
+    });
+
+    console.log('✅ Legendas agendadas processadas:', scheduledEvents);
+    return scheduledEvents;
+  } catch (err) {
+    console.error('🚨 Erro crítico ao buscar legendas agendadas:', err);
+    return [];
   }
 } 

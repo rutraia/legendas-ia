@@ -143,176 +143,174 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent/20 to-background p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-950/95 to-gray-900/90 p-4">
+      <div className="w-full max-w-md bg-gradient-to-b from-gray-950/90 to-gray-900/90 backdrop-blur-xl shadow-xl rounded-2xl border border-white/10 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            InstaScribe<span className="text-primary">.</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Sua plataforma de gerenciamento de conteúdo
-          </p>
+          <h1 className="text-gradient text-3xl font-extrabold mb-2">Legendas IA<span className="text-primary">.</span></h1>
+          <p className="text-gray-400 mt-2">Sua plataforma de gerenciamento de conteúdo</p>
         </div>
         
         <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login" className="text-foreground">Login</TabsTrigger>
-            <TabsTrigger value="cadastro" className="text-foreground">Cadastro</TabsTrigger>
-          </TabsList>
+          <div className="flex mb-8 rounded-lg overflow-hidden border border-white/10">
+            <button 
+              className={`flex-1 py-2 px-4 bg-gray-900/80 text-gray-100 font-semibold focus:outline-none transition-all duration-300 hover:bg-primary/20 hover:scale-105 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary/70 ${activeTab === 'login' ? 'bg-gradient-to-r from-primary/30 to-accent/20 text-primary shadow-xl' : ''}`}
+              onClick={() => setActiveTab('login')}
+            >
+              Login
+            </button>
+            <button 
+              className={`flex-1 py-2 px-4 bg-transparent text-gray-400 font-semibold focus:outline-none transition-all duration-300 hover:bg-primary/10 hover:scale-105 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary/70 ${activeTab === 'cadastro' ? 'bg-gradient-to-r from-primary/30 to-accent/20 text-primary shadow-xl' : ''}`}
+              onClick={() => setActiveTab('cadastro')}
+            >
+              Cadastro
+            </button>
+          </div>
           
           <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
-                <CardDescription>
-                  Entre com suas credenciais para acessar sua conta
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-100 mb-2">Bem-vindo de volta</h2>
+              <p className="text-gray-400 mb-4">Entre com suas credenciais para acessar sua conta</p>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="block text-gray-300 mb-1">E-mail</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isProcessing}
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-900/80 border border-white/10 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="block text-gray-300 mb-1">Senha</Label>
+                    <button 
+                      type="button"
+                      id="forgot-password-btn"
+                      aria-label="Esqueceu a senha?"
+                      onClick={() => {
+                        const forgotPasswordTab = document.getElementById('recuperar-senha');
+                        forgotPasswordTab?.click();
+                      }}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
+                  <div className="relative">
                     <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isProcessing}
+                      className="w-full px-4 py-3 rounded-lg bg-gray-900/80 border border-white/10 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
                     />
+                    <button
+                      type="button"
+                      id="toggle-password-visibility"
+                      aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Senha</Label>
-                      <button 
-                        type="button"
-                        id="forgot-password-btn"
-                        aria-label="Esqueceu a senha?"
-                        onClick={() => {
-                          const forgotPasswordTab = document.getElementById('recuperar-senha');
-                          forgotPasswordTab?.click();
-                        }}
-                        className="text-xs text-blue-700 hover:underline font-medium"
-                      >
-                        Esqueceu a senha?
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isProcessing}
-                      />
-                      <button
-                        type="button"
-                        id="toggle-password-visibility"
-                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? (
-                          <EyeOffIcon className="h-4 w-4" />
-                        ) : (
-                          <EyeIcon className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white" disabled={isProcessing}>
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Aguarde...
-                      </>
-                    ) : (
-                      <>
-                        Entrar
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                </div>
+                <Button type="submit" className="w-full py-3 rounded-lg font-bold text-lg shadow-lg mt-2 flex items-center justify-center gap-2" disabled={isProcessing}>
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Aguarde...
+                    </>
+                  ) : (
+                    <>
+                      Entrar
+                      <ArrowRight className="h-5 w-5" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
           </TabsContent>
           
           <TabsContent value="cadastro">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Criar uma conta</CardTitle>
-                <CardDescription>
-                  Preencha os campos abaixo para se cadastrar
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-100 mb-2">Criar uma conta</h2>
+              <p className="text-gray-400 mb-4">Preencha os campos abaixo para se cadastrar</p>
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email" className="block text-gray-300 mb-1">E-mail</Label>
+                  <Input
+                    id="signup-email"
+                    name="signup-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isProcessing}
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-900/80 border border-white/10 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password" className="block text-gray-300 mb-1">Senha</Label>
+                  <div className="relative">
                     <Input
-                      id="signup-email"
-                      name="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="signup-password"
+                      name="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isProcessing}
+                      className="w-full px-4 py-3 rounded-lg bg-gray-900/80 border border-white/10 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
                     />
+                    <button
+                      type="button"
+                      id="toggle-signup-password-visibility"
+                      aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        name="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isProcessing}
-                      />
-                      <button
-                        type="button"
-                        id="toggle-signup-password-visibility"
-                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? (
-                          <EyeOffIcon className="h-4 w-4" />
-                        ) : (
-                          <EyeIcon className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      A senha deve ter pelo menos 6 caracteres
-                    </p>
-                  </div>
-                  <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white" disabled={isProcessing}>
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Aguarde...
-                      </>
-                    ) : (
-                      <>
-                        Cadastrar
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-muted-foreground">
+                    A senha deve ter pelo menos 6 caracteres
+                  </p>
+                </div>
+                <Button type="submit" className="w-full py-3 rounded-lg font-bold text-lg shadow-lg mt-2 flex items-center justify-center gap-2" disabled={isProcessing}>
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Aguarde...
+                    </>
+                  ) : (
+                    <>
+                      Cadastrar
+                      <ArrowRight className="h-5 w-5" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
           </TabsContent>
           
           <div className="mt-6">
@@ -341,7 +339,7 @@ const Login: React.FC = () => {
             <CardContent>
               <form onSubmit={handlePasswordRecovery} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="recovery-email">E-mail</Label>
+                  <Label htmlFor="recovery-email" className="block text-gray-300 mb-1">E-mail</Label>
                   <Input
                     id="recovery-email"
                     name="recovery-email"
@@ -351,10 +349,11 @@ const Login: React.FC = () => {
                     onChange={(e) => setRecoveryEmail(e.target.value)}
                     required
                     disabled={isRecovering}
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-900/80 border border-white/10 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
                   />
                 </div>
                 <div className="flex space-x-2">
-                  <Button type="submit" className="flex-1" disabled={isRecovering}>
+                  <Button type="submit" className="flex-1 py-3 rounded-lg font-bold text-lg shadow-lg mt-2 flex items-center justify-center gap-2" disabled={isRecovering}>
                     {isRecovering ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

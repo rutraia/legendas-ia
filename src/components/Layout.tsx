@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -49,12 +50,16 @@ export const Layout = ({ children }: LayoutProps) => {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Clientes', href: '/clients', icon: Users },
     { name: 'Gerar Legendas', href: '/caption-generator', icon: MessageSquarePlus },
-    { name: 'Biblioteca', href: '/caption-library', icon: BookMarked },
+    { name: 'Programação', href: '/caption-library', icon: BookMarked },
     { name: 'Calendário', href: '/calendar', icon: Calendar },
   ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
+      {/* Botão de alternância de tema */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       {/* Mobile sidebar toggle */}
       {isMobile && (
         <Button 
@@ -66,20 +71,17 @@ export const Layout = ({ children }: LayoutProps) => {
           {isSidebarOpen ? <X /> : <Menu />}
         </Button>
       )}
-
       {/* Sidebar */}
-      <aside className="md:w-64 flex-shrink-0 bg-card border-r">
-        <div className="h-16 flex items-center px-6 border-b">
+      <aside className="md:w-64 flex-shrink-0 bg-card border-r min-h-[60px]">
+        <div className="h-16 flex items-center px-4 md:px-6 border-b">
           <Link to="/dashboard" className="flex items-center">
             <span className="text-xl font-bold text-primary">Legendas IA</span>
           </Link>
         </div>
-        
-        <nav className="p-4 space-y-1">
+        <nav className="p-2 md:p-4 space-y-1">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href || 
                             (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-            
             return (
               <Link
                 key={item.name}
@@ -97,8 +99,7 @@ export const Layout = ({ children }: LayoutProps) => {
             );
           })}
         </nav>
-        
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-2 md:p-4 border-t">
           {user && (
             <div className="flex flex-col space-y-3">
               <div className="flex items-center space-x-2 py-2">
@@ -106,7 +107,7 @@ export const Layout = ({ children }: LayoutProps) => {
                   <UserIcon className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-xs md:text-sm font-medium truncate">
                     {user.email}
                   </p>
                 </div>
@@ -124,21 +125,54 @@ export const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
       </aside>
-      
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Barra superior */}
-        <header className="h-16 border-b flex items-center justify-between px-6">
+        <header className="h-16 border-b flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 gap-2 md:gap-0">
           <div className="md:hidden">
             <Link to="/dashboard" className="flex items-center">
               <span className="text-xl font-bold text-primary">Legendas IA</span>
             </Link>
           </div>
           <div className="flex-1 md:pl-4">
-            <h1 className="text-lg font-medium">{
-              navigation.find(item => location.pathname === item.href || 
-                (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name || 'Dashboard'
-            }</h1>
+            <h1 className="text-base md:text-lg font-medium flex items-center">
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Clientes'
+              ) && (
+                <Users className="mr-2 h-5 w-5 text-primary" />
+              )}
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Gerar Legendas'
+              ) && (
+                <MessageSquarePlus className="mr-2 h-5 w-5 text-primary" />
+              )}
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Programação'
+              ) && (
+                <Calendar className="mr-2 h-5 w-5 text-primary" />
+              )}
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Calendário'
+              ) && (
+                <Calendar className="mr-2 h-5 w-5 text-primary" />
+              )}
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Dashboard'
+              ) && (
+                <Home className="mr-2 h-5 w-5 text-primary" />
+              )}
+              {(
+                navigation.find(item => location.pathname === item.href || 
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href)))?.name === 'Configurações'
+              ) && (
+                <Settings className="mr-2 h-5 w-5 text-primary" />
+              )}
+            </h1>
           </div>
           <div className="md:hidden">
             {user ? (
@@ -160,13 +194,11 @@ export const Layout = ({ children }: LayoutProps) => {
             )}
           </div>
         </header>
-        
         {/* Conteúdo */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 w-full max-w-full">
           {children}
         </div>
       </main>
-      
       {/* Overlay for mobile */}
       {isMobile && isSidebarOpen && (
         <div 

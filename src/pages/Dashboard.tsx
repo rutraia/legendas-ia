@@ -114,49 +114,34 @@ const Dashboard = () => {
   return (
     <Layout>
       <PageHeader
-        title="Dashboard"
-        description="Bem-vindo ao seu painel de controle"
+        title={<span className="flex items-center gap-2 text-2xl font-bold text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-fade-in">Dashboard <span className="text-base font-normal text-muted-foreground">/ visão geral</span></span>}
+        description={<span className="text-muted-foreground text-lg animate-fade-in-up">Bem-vindo ao seu painel de controle! Veja rapidamente seus dados e acesse as principais funções.</span>}
       />
       
       {/* Quick Actions */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Link to="/caption-generator" className="block">
-          <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
-            <CardContent className="p-6 flex items-center">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
-                <MessageSquarePlus className="h-6 w-6 text-primary" />
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-8 animate-fade-in-up">
+        <Link to="/caption-generator" className="block group">
+          <Card className="h-full hover:border-primary/80 transition-all cursor-pointer shadow-lg group-hover:scale-[1.02] group-hover:shadow-xl bg-gradient-to-br from-primary/5 to-background/80">
+            <CardContent className="p-7 flex items-center">
+              <div className="h-14 w-14 bg-primary/10 rounded-full flex items-center justify-center mr-5 shadow">
+                <MessageSquarePlus className="h-7 w-7 text-primary animate-fade-in" />
               </div>
               <div>
-                <h3 className="font-semibold">Criar Legendas</h3>
+                <h3 className="font-semibold text-lg text-primary">Criar Legendas</h3>
                 <p className="text-sm text-muted-foreground">Gerar novas legendas para suas redes sociais</p>
               </div>
             </CardContent>
           </Card>
         </Link>
-        
-        <Link to="/clients" className="block">
-          <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
-            <CardContent className="p-6 flex items-center">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
-                <Users className="h-6 w-6 text-primary" />
+        <Link to="/clients" className="block group">
+          <Card className="h-full hover:border-accent/80 transition-all cursor-pointer shadow-lg group-hover:scale-[1.02] group-hover:shadow-xl bg-gradient-to-br from-accent/10 to-background/80">
+            <CardContent className="p-7 flex items-center">
+              <div className="h-14 w-14 bg-accent/10 rounded-full flex items-center justify-center mr-5 shadow">
+                <Users className="h-7 w-7 text-accent animate-fade-in" />
               </div>
               <div>
-                <h3 className="font-semibold">Gerenciar Clientes</h3>
-                <p className="text-sm text-muted-foreground">Visualizar e editar perfis de clientes</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        
-        <Link to="/calendar" className="block">
-          <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
-            <CardContent className="p-6 flex items-center">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Calendário</h3>
-                <p className="text-sm text-muted-foreground">Visualizar e gerenciar seu calendário de conteúdo</p>
+                <h3 className="font-semibold text-lg text-accent">Clientes</h3>
+                <p className="text-sm text-muted-foreground">Gerencie seus clientes e suas personas</p>
               </div>
             </CardContent>
           </Card>
@@ -169,18 +154,24 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="text-lg">Visão Geral</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {renderStatCard("Clientes", clients.length, <Users className="h-4 w-4 text-muted-foreground" />)}
-              {renderStatCard("Legendas", captions.length, <BookMarked className="h-4 w-4 text-muted-foreground" />)}
-              {renderStatCard("Agendados", scheduledCaptions, <Clock className="h-4 w-4 text-muted-foreground" />)}
-              
-              <div className="flex flex-col p-3">
-                <span className="text-muted-foreground text-sm">Plataformas</span>
-                <div className="flex gap-2 mt-1">
-                  {platforms.has('instagram') && <Instagram className="h-5 w-5 text-[#E1306C]" />}
-                  {platforms.has('facebook') && <Facebook className="h-5 w-5 text-[#1877F2]" />}
-                  {platforms.has('linkedin') && <Linkedin className="h-5 w-5 text-[#0A66C2]" />}
+          <CardContent className="p-6 pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-h-[120px]">
+              {renderStatCard(
+                "Clientes",
+                <span className="text-3xl font-bold text-primary animate-fade-in-up">{clients.length}</span>,
+                <Users className="h-6 w-6 text-primary bg-primary/10 rounded-full p-1 shadow-md animate-fade-in" />
+              )}
+              {renderStatCard(
+                "Agendados",
+                <span className="text-3xl font-bold text-primary animate-fade-in-up">{scheduledCaptions}</span>,
+                <Clock className="h-6 w-6 text-primary bg-primary/10 rounded-full p-1 shadow-md animate-fade-in" />
+              )}
+              <div className="flex flex-col p-3 justify-center items-center bg-gradient-to-br from-primary/10 to-accent/40 rounded-xl shadow-md animate-fade-in">
+                <span className="text-muted-foreground text-sm mb-2">Plataformas</span>
+                <div className="flex gap-4 mt-1">
+                  {platforms.has('instagram') && <Instagram className="h-7 w-7 text-[#E1306C] bg-white dark:bg-background rounded-full shadow animate-fade-in" />}
+                  {platforms.has('facebook') && <Facebook className="h-7 w-7 text-[#1877F2] bg-white dark:bg-background rounded-full shadow animate-fade-in" />}
+                  {platforms.has('linkedin') && <Linkedin className="h-7 w-7 text-[#0A66C2] bg-white dark:bg-background rounded-full shadow animate-fade-in" />}
                 </div>
               </div>
             </div>
@@ -235,40 +226,43 @@ const Dashboard = () => {
         </section>
         
         {/* Recent Captions */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Legendas Recentes</h2>
-            <Link to="/caption-library">
-              <Button variant="ghost" className="flex items-center text-sm h-8 px-2">
-                Ver todas
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="space-y-4">
-            {isLoading ? (
-              <>
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-              </>
-            ) : error ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Erro ao carregar legendas: {error}
+        <section className="animate-fade-in-up">
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-background to-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between pb-1">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Programação Recentes
+              </CardTitle>
+              <Link to="/caption-library">
+                <Button variant="ghost" className="flex items-center text-sm h-8 px-2">
+                  Ver todas
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="space-y-4">
+                {isLoading ? (
+                  <>
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                  </>
+                ) : error ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Erro ao carregar programações: {error}
+                  </div>
+                ) : recentCaptions.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhuma programação encontrada
+                  </div>
+                ) : (
+                  recentCaptions.map((caption) => (
+                    <CaptionCard key={caption.id} caption={adaptCaptionToCardFormat(caption)} />
+                  ))
+                )}
               </div>
-            ) : recentCaptions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhuma legenda encontrada
-              </div>
-            ) : (
-              recentCaptions.map((caption) => (
-                <CaptionCard 
-                  key={caption.id} 
-                  caption={adaptCaptionToCardFormat(caption)} 
-                />
-              ))
-            )}
-          </div>
+            </CardContent>
+          </Card>
         </section>
       </div>
     </Layout>

@@ -38,7 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CardDescription } from '@/components/ui/card';
 import EmptyState from '@/components/EmptyState';
-import { getClientById, createCaption, getClients } from '@/lib/supabase/database';
+import { getClientById, getClients } from '@/lib/supabase/database';
 import { supabase } from '@/lib/supabase/client';
 import { 
   Dialog,
@@ -52,6 +52,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { v4 as uuidv4 } from 'uuid';
+import { createCaptionSecurely } from '../lib/supabase/services/caption-service';
 
 // Extendendo o tipo Caption para compatibilidade com o código existente
 type ExtendedCaption = Caption & {
@@ -687,18 +688,20 @@ const CaptionGenerator = () => {
       if (saveToLibrary) {
         console.log("Salvando na biblioteca...");
         try {
-          const { data: savedCaption, error: insertError } = await supabase
-            .from('captions')
-            .insert([captionToSave])
-            .select()
-            .single();
+          if (!selectedClient || !selectedClient.id) {
+            throw new Error("Cliente não selecionado ou ID do cliente inválido");
+          }
           
-          if (insertError) {
-            console.error("Erro ao inserir legenda na biblioteca:", insertError);
-            toast.dismiss(loadingToastId);
-            toast.error(`Erro ao salvar na biblioteca: ${insertError.message}`);
-          } else {
-            console.log("Legenda salva na biblioteca com sucesso:", savedCaption);
+          const createdCaption = await createCaptionSecurely({
+            client_id: selectedClient.id,
+            content: generatedCaptions[0].content,
+            platform: selectedPlatform,
+            status: 'draft',
+            image_url: validImageUrl
+          });
+          
+          if (createdCaption) {
+            console.log("Legenda salva na biblioteca com sucesso:", createdCaption);
             librarySuccess = true;
           }
         } catch (libraryError) {
@@ -708,7 +711,7 @@ const CaptionGenerator = () => {
       
       // Salvar nos recentes do cliente, se selecionado
       if (saveToRecent) {
-        console.log("💾 Salvando legenda recente para cliente:", selectedClient.id);
+        console.log(`Salvando legenda para cliente: ${selectedClient.id}`);
         try {
           // Preparar legenda para recentes (formato simplificado)
           const recentCaption = {
@@ -752,7 +755,6 @@ const CaptionGenerator = () => {
           
           // Nova legenda no início, limitando a 5 legendas
           const updatedCaptions = [recentCaption, ...currentCaptions.slice(0, 4)];
-          console.log("Atualizando para as legendas:", updatedCaptions.length, "itens");
           
           // Atualizar cliente com nova lista de legendas
           const { error: updateError } = await supabase
@@ -766,7 +768,7 @@ const CaptionGenerator = () => {
           }
           
           recentSuccess = true;
-          console.log("✅ Legendas recentes salvas com sucesso!");
+          console.log("Legendas recentes salvas com sucesso");
         } catch (error) {
           console.error("Erro ao salvar legenda nos recentes:", error);
           toast.error("Não foi possível salvar nos recentes do cliente");
@@ -904,7 +906,6 @@ const CaptionGenerator = () => {
 
     try {
       setIsSaving(true);
-      console.log(`Salvando legenda para cliente ${selectedClient.id}`);
       
       // Buscar legendas recentes atuais
       const { data: clientData, error: clientError } = await supabase
@@ -928,6 +929,8 @@ const CaptionGenerator = () => {
             currentCaptions = clientData.recent_captions;
           } else if (typeof clientData.recent_captions === 'string') {
             currentCaptions = JSON.parse(clientData.recent_captions);
+          } else if (typeof clientData.recent_captions === 'object') {
+            currentCaptions = [clientData.recent_captions];
           }
         } catch (e) {
           console.error("Erro ao processar legendas existentes:", e);
@@ -943,6 +946,7 @@ const CaptionGenerator = () => {
       const newCaption = {
         id: uuidv4(),
         content: generatedCaptions[0].content,
+        platform: selectedPlatform,
         created_at: new Date().toISOString(),
       };
       
@@ -984,7 +988,7 @@ const CaptionGenerator = () => {
               Ir para o Perfil do Cliente
             </Button>
           )}
-          <Button 
+          {/* <Button 
             variant="outline"
             onClick={() => navigate('/caption-library')}
             className="flex items-center gap-1"
@@ -994,7 +998,7 @@ const CaptionGenerator = () => {
               <line x1="9" y1="3" x2="9" y2="21"></line>
             </svg>
             Biblioteca
-          </Button>
+          </Button> */}
         </div>
       </PageHeader>
       
@@ -1086,7 +1090,7 @@ const CaptionGenerator = () => {
               
               {/* Exibir informações da persona do cliente quando selecionado */}
               {clientDetails && (
-                <Alert className="bg-blue-50 border-blue-200">
+                <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-100">
                   <div className="space-y-2">
                     <h4 className="font-medium">Persona do Cliente</h4>
                     
@@ -1173,85 +1177,69 @@ const CaptionGenerator = () => {
                 />
               </div>
               
-              <Tabs defaultValue="basic">
-                <TabsList>
-                  <TabsTrigger value="basic">Básico</TabsTrigger>
-                  <TabsTrigger value="advanced">Avançado</TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic">
-                  <div className="pt-2">
-                    <p className="text-sm text-muted-foreground">
-                      Configure opções básicas para a geração da legenda.
-                    </p>
-                  </div>
-                </TabsContent>
-                <TabsContent value="advanced">
-                  <div className="pt-4 space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label htmlFor="creative-level">Nível de Criatividade</Label>
-                        <span className="text-sm text-muted-foreground">{creativeLevel[0]}%</span>
-                      </div>
-                      <Slider
-                        id="creative-level"
-                        min={0}
-                        max={100}
-                        step={10}
-                        value={creativeLevel}
-                        onValueChange={setCreativeLevel}
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Conservador</span>
-                        <span>Criativo</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="image-url">URL da Imagem (opcional)</Label>
-                      <div className="flex gap-2">
-                        <input
-                          id="image-url"
-                          name="image-url"
-                          type="url"
-                          placeholder="https://exemplo.com/imagem.jpg"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          value={imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          aria-label="URL da Imagem"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Adicionar uma imagem para ser salva junto com a legenda na biblioteca
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="webhook-url">URL do Webhook (n8n)</Label>
-                      <div className="flex gap-2">
-                        <input
-                          id="webhook-url"
-                          name="webhook-url"
-                          type="url"
-                          placeholder="https://your-n8n-instance.com/webhook/..."
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          value={webhookUrl}
-                          onChange={(e) => {
-                            setWebhookUrl(e.target.value);
-                            localStorage.setItem('webhookUrl', e.target.value);
-                          }}
-                          aria-label="URL do Webhook"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        O payload enviado inclui as informações da persona do cliente. Configure seu webhook para utilizar estes dados no modelo de linguagem.
-                      </p>
-                    </div>
-                    
-                    <Alert className="text-xs border">
-                      <AlertTitle>Formato do novo payload</AlertTitle>
-                      <AlertDescription>
-                        <code className="block bg-muted p-2 rounded text-[10px] overflow-auto max-h-32">
-                          {`{
+              {/*
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="creative-level">Nível de Criatividade</Label>
+                  <span className="text-sm text-muted-foreground">{creativeLevel[0]}%</span>
+                </div>
+                <Slider
+                  id="creative-level"
+                  min={0}
+                  max={100}
+                  step={10}
+                  value={creativeLevel}
+                  onValueChange={setCreativeLevel}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Conservador</span>
+                  <span>Criativo</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image-url">URL da Imagem (opcional)</Label>
+                <div className="flex gap-2">
+                  <input
+                    id="image-url"
+                    name="image-url"
+                    type="url"
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    aria-label="URL da Imagem"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Adicionar uma imagem para ser salva junto com a legenda na biblioteca
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="webhook-url">URL do Webhook (n8n)</Label>
+                <div className="flex gap-2">
+                  <input
+                    id="webhook-url"
+                    name="webhook-url"
+                    type="url"
+                    placeholder="https://your-n8n-instance.com/webhook/..."
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={webhookUrl}
+                    onChange={(e) => {
+                      setWebhookUrl(e.target.value);
+                      localStorage.setItem('webhookUrl', e.target.value);
+                    }}
+                    aria-label="URL do Webhook"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  O payload enviado inclui as informações da persona do cliente. Configure seu webhook para utilizar estes dados no modelo de linguagem.
+                </p>
+              </div>
+              <Alert className="text-xs border">
+                <AlertTitle>Formato do novo payload</AlertTitle>
+                <AlertDescription>
+                  <code className="block bg-muted p-2 rounded text-[10px] overflow-auto max-h-32">
+                    {`{
   "client": "Nome do Cliente",
   "prompt": "Texto do prompt",
   "platform": "instagram|facebook|linkedin|all",
@@ -1267,13 +1255,10 @@ const CaptionGenerator = () => {
     "socialMedia": [{ "type": "instagram", "username": "@usuario" }, ...]
   }
 }`}
-                        </code>
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                </TabsContent>
-              </Tabs>
-              
+                  </code>
+                </AlertDescription>
+              </Alert>
+              */}
               {!webhookUrl ? (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />

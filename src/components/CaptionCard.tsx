@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Clipboard, Calendar, Image, Instagram, Facebook, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -19,12 +18,13 @@ export interface CaptionCardItem {
 
 export interface CaptionCardProps {
   caption: CaptionCardItem;
-  onSchedule?: (id: string, date: Date) => void;
+  onSchedule?: (action?: string) => void;
+  scheduled?: boolean;
   onEdit?: (id: string, text: string) => void;
   onDelete?: (id: string) => void;
 }
 
-const CaptionCard: React.FC<CaptionCardProps> = ({ caption, onSchedule, onEdit, onDelete }) => {
+const CaptionCard: React.FC<CaptionCardProps> = ({ caption, onSchedule, scheduled, onEdit, onDelete }) => {
   const { toast } = useToast();
 
   const getPlatformIcon = (platform: string) => {
@@ -53,13 +53,6 @@ const CaptionCard: React.FC<CaptionCardProps> = ({ caption, onSchedule, onEdit, 
       default:
         return "bg-muted text-muted-foreground";
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(caption.text);
-    toast("Copiado!", {
-      description: "Legenda copiada para área de transferência",
-    });
   };
 
   const formatDateDisplay = (dateString: string) => {
@@ -110,34 +103,6 @@ const CaptionCard: React.FC<CaptionCardProps> = ({ caption, onSchedule, onEdit, 
           <span>Criado em: {formatDateDisplay(caption.createdAt)}</span>
         </div>
       </CardContent>
-      
-      <CardFooter className="bg-muted/50 py-3 px-6">
-        <div className="w-full flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={handleCopy}
-          >
-            <Clipboard className="h-4 w-4 mr-2" />
-            Copiar
-          </Button>
-          
-          {!caption.scheduledFor && (
-            <Button variant="outline" size="sm" className="flex-1">
-              <Calendar className="h-4 w-4 mr-2" />
-              Agendar
-            </Button>
-          )}
-          
-          {!caption.imageUrl && (
-            <Button variant="outline" size="sm" className="flex-1">
-              <Image className="h-4 w-4 mr-2" />
-              Adicionar Imagem
-            </Button>
-          )}
-        </div>
-      </CardFooter>
     </Card>
   );
 };

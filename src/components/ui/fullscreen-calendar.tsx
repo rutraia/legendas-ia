@@ -20,7 +20,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusCircleIcon,
-  SearchIcon,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -42,6 +41,7 @@ interface CalendarData {
 
 interface FullScreenCalendarProps {
   data: CalendarData[]
+  onSelectDay?: (day: Date) => void
 }
 
 const colStartClasses = [
@@ -54,7 +54,7 @@ const colStartClasses = [
   "col-start-7",
 ]
 
-export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
+export function FullScreenCalendar({ data, onSelectDay }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
   const [currentMonth, setCurrentMonth] = React.useState(
@@ -81,6 +81,13 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
   function goToToday() {
     setCurrentMonth(format(today, "MMM-yyyy"))
   }
+  
+  function handleSelectDay(day: Date) {
+    setSelectedDay(day)
+    if (onSelectDay) {
+      onSelectDay(day)
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col">
@@ -97,21 +104,21 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
               </div>
             </div>
             <div className="flex flex-col">
-              <h2 className="text-lg font-semibold text-foreground">
+              {/* <h2 className="text-lg font-semibold text-foreground">
                 {format(firstDayCurrentMonth, "MMMM, yyyy")}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {format(firstDayCurrentMonth, "MMM d, yyyy")} -{" "}
                 {format(endOfMonth(firstDayCurrentMonth), "MMM d, yyyy")}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-          <Button variant="outline" size="icon" className="hidden lg:flex">
+          {/* <Button variant="outline" size="icon" className="hidden lg:flex">
             <SearchIcon size={16} strokeWidth={2} aria-hidden="true" />
-          </Button>
+          </Button> */}
 
           <Separator orientation="vertical" className="hidden h-6 lg:block" />
 
@@ -149,10 +156,10 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
             className="block w-full md:hidden"
           />
 
-          <Button className="w-full gap-2 md:w-auto">
+          {/* <Button className="w-full gap-2 md:w-auto">
             <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
             <span>New Event</span>
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -175,7 +182,7 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
             {days.map((day, dayIdx) =>
               !isDesktop ? (
                 <button
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => handleSelectDay(day)}
                   key={dayIdx}
                   type="button"
                   className={cn(
@@ -231,7 +238,7 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
               ) : (
                 <div
                   key={dayIdx}
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => handleSelectDay(day)}
                   className={cn(
                     dayIdx === 0 && colStartClasses[getDay(day)],
                     !isEqual(day, selectedDay) &&
@@ -305,7 +312,7 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
           <div className="isolate grid w-full grid-cols-7 grid-rows-5 border-x lg:hidden">
             {days.map((day, dayIdx) => (
               <button
-                onClick={() => setSelectedDay(day)}
+                onClick={() => handleSelectDay(day)}
                 key={dayIdx}
                 type="button"
                 className={cn(

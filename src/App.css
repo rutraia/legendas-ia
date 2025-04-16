@@ -40,3 +40,75 @@
 .read-the-docs {
   color: #888;
 }
+
+/* --- RESPONSIVIDADE PARA CALENDÁRIO --- */
+@media (max-width: 1100px) {
+  .main-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+  .sidebar {
+    width: 100%;
+    margin-bottom: 20px;
+    min-width: unset;
+  }
+  .calendar-container {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 10px;
+  }
+  .events-container {
+    width: 100%;
+    margin-top: 20px;
+    min-width: unset;
+  }
+}
+
+@media (max-width: 700px) {
+  .main-content {
+    padding: 4px;
+  }
+  .calendar-header,
+  .event-header {
+    font-size: 1.05rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .calendar-table,
+  .calendar-table th,
+  .calendar-table td {
+    font-size: 0.93rem;
+    padding: 2px;
+  }
+  .sidebar {
+    padding: 8px 0;
+  }
+  .calendar-container,
+  .events-container {
+    padding: 6px;
+  }
+}
+
+@media (max-width: 500px) {
+  .main-content {
+    padding: 2px;
+  }
+  .calendar-header,
+  .event-header {
+    font-size: 0.98rem;
+  }
+  .sidebar,
+  .calendar-container,
+  .events-container {
+    padding: 2px;
+  }
+  .calendar-table,
+  .calendar-table th,
+  .calendar-table td {
+    font-size: 0.8rem;
+    padding: 1px;
+  }
+}
+/* --- FIM DA RESPONSIVIDADE --- */

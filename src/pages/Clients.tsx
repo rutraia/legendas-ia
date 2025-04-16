@@ -258,36 +258,46 @@ const Clients = () => {
   
   return (
     <Layout>
-      <PageHeader
-        title="Clientes"
-        description="Gerencie os perfis dos seus clientes"
-      >
-        <Button onClick={() => setIsNewClientDialogOpen(true)}>
+      {/* Header fixo e destacado */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md shadow-sm border-b border-border mb-8 py-4 px-2 md:px-8 flex flex-col md:flex-row md:items-center md:justify-between animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-extrabold text-primary dark:text-accent-foreground tracking-tight">Clientes</h1>
+          <span className="text-muted-foreground text-base">Gerencie seus clientes e visualize suas personas</span>
+        </div>
+        <Button onClick={() => setIsNewClientDialogOpen(true)} className="mt-4 md:mt-0 bg-gradient-to-r from-primary to-accent text-white shadow-md hover:scale-105 transition-transform px-6 py-2 text-base font-semibold rounded-lg">
           <Plus className="h-4 w-4 mr-2" />
           Novo Cliente
         </Button>
-      </PageHeader>
-      
-      {/* Search and filter */}
-      <div className="flex mb-6">
+      </div>
+      {/* Busca com feedback */}
+      <div className="flex mb-8 animate-fade-in-up">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar clientes..."
-            className="pl-10"
+            placeholder="Buscar por nome, segmento ou rede social..."
+            className="pl-10 rounded-xl shadow-sm focus:ring-2 focus:ring-primary/60 bg-background/80 pr-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Buscar clientes"
           />
+          {searchQuery && (
+            <button
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition"
+              onClick={() => setSearchQuery('')}
+              aria-label="Limpar busca"
+            >
+              ×
+            </button>
+          )}
         </div>
       </div>
-      
-      {/* Clients grid */}
+      {/* Grid responsivo dos cards */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex items-center justify-center h-64 animate-fade-in">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary border-t-2"></div>
         </div>
       ) : filteredClients.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in-up">
           {filteredClients.map((client) => (
             <ClientCard 
               key={client.id} 
@@ -298,47 +308,51 @@ const Clients = () => {
         </div>
       ) : (
         <EmptyState
-          icon={<Users className="h-8 w-8 text-muted-foreground" />}
+          icon={<Users className="h-16 w-16 text-accent/30 animate-fade-in" />}
           title={searchQuery ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
           description={searchQuery 
-            ? "Tente usar termos diferentes na sua busca" 
-            : "Comece a adicionar clientes para criar conteúdo personalizado"
+            ? "Tente usar outros termos ou limpe a busca para ver todos os clientes."
+            : "Você ainda não cadastrou nenhum cliente. Clique em 'Novo Cliente' para começar!"
           }
           actionLabel={!searchQuery ? "Adicionar Cliente" : undefined}
           onClick={() => !searchQuery && setIsNewClientDialogOpen(true)}
         />
       )}
-      
-      {/* New Client Dialog */}
+      {/* Modal de novo cliente aprimorado */}
       <Dialog open={isNewClientDialogOpen} onOpenChange={setIsNewClientDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl shadow-2xl animate-fade-in-up max-w-lg w-full bg-background">
           <DialogHeader>
-            <DialogTitle>Novo Cliente</DialogTitle>
-            <DialogDescription>
-              Adicione um novo cliente para gerenciar seu conteúdo
-            </DialogDescription>
+            <DialogTitle className="text-xl font-bold text-primary dark:text-accent-foreground">Novo Cliente</DialogTitle>
+            <DialogDescription className="text-muted-foreground">Adicione um novo cliente para gerenciar seu conteúdo</DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome do Cliente</Label>
+          <form
+            onSubmit={e => { e.preventDefault(); handleCreateClient(); }}
+            className="space-y-6"
+            aria-label="Formulário de novo cliente"
+          >
+            <div className="space-y-3">
+              <Label htmlFor="name">Nome do Cliente *</Label>
               <Input
                 id="name"
                 value={newClientName}
                 onChange={(e) => setNewClientName(e.target.value)}
+                className="rounded-lg shadow-sm text-base bg-background"
+                required
+                aria-required="true"
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="industry">Indústria/Segmento</Label>
+            <div className="space-y-3">
+              <Label htmlFor="industry">Indústria/Segmento *</Label>
               <Input
                 id="industry"
                 value={newClientIndustry}
                 onChange={(e) => setNewClientIndustry(e.target.value)}
+                className="rounded-lg shadow-sm text-base bg-background"
+                required
+                aria-required="true"
               />
             </div>
-            
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Redes Sociais</Label>
               <Input
                 id="instagram"
@@ -348,6 +362,7 @@ const Clients = () => {
                 onChange={(e) => setNewClientInstagram(e.target.value)}
                 autoComplete="off"
                 aria-label="Nome de usuário no Instagram"
+                className="rounded-lg shadow-sm bg-background"
               />
               <Input
                 id="facebook"
@@ -357,6 +372,7 @@ const Clients = () => {
                 onChange={(e) => setNewClientFacebook(e.target.value)}
                 autoComplete="off"
                 aria-label="Nome de usuário no Facebook"
+                className="rounded-lg shadow-sm bg-background"
               />
               <Input
                 id="linkedin"
@@ -366,18 +382,13 @@ const Clients = () => {
                 onChange={(e) => setNewClientLinkedin(e.target.value)}
                 autoComplete="off"
                 aria-label="Nome de usuário no LinkedIn"
+                className="rounded-lg shadow-sm bg-background"
               />
             </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewClientDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateClient}>
-              Criar Cliente
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent text-white shadow hover:scale-105 transition-transform text-base py-3">Salvar Cliente</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Layout>
